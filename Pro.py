@@ -1,6 +1,6 @@
-#
+# Library Management System - Final Project
+# Concepts: Classes, Dicts, Sets, List Comprehensions, and Functions
 
-# --- Task 1: Class Definitions ---
 class Book:
     def __init__(self, title, author):
         self.title = title
@@ -10,106 +10,114 @@ class Member:
     def __init__(self, name):
         self.member_name = name
 
-# --- Global Data Storage ---
-books_list = []
-members_list = []
-total_books = 0  # Using an integer for arithmetic practice
+# --- Data Structures ---
+books = {}        # Dict: {book_id: BookObject}
+members = {}      # Dict: {member_id: MemberObject}
+issued_books = set()  # Set: Stores book_ids that are currently out
+transactions = [] # List of dicts: To log every borrow/return
 
-def start_program():
-    global total_books
-    
-    # We use a variable to keep the loop running
-    keep_running = True
-    
-    while keep_running:
-        print("\n==============================")
-        print("   LIBRARY MANAGEMENT SYSTEM   ")
-        print("==============================")
-        print("1. Add New Book")
-        print("2. Search for a Book")
-        print("3. Remove a Book")
-        print("4. Add New Member")
-        print("5. Remove Member")
-        print("6. Show Library Stats")
-        print("7. Exit")
+def main():
+    while True:
+        print("\n=== LIBRARY SYSTEM MENU ===")
+        print("1. Add Book/Member (Create)")
+        print("2. Update Book/Member (Update)")
+        print("3. Remove Book/Member (Delete)")
+        print("4. Search & Filter Books (Read)")
+        print("5. Borrow Book")
+        print("6. Return Book")
+        print("7. View Transaction History")
+        print("8. Exit")
         
-        choice = input("\nEnter choice (1-7): ")
+        choice = input("\nSelect an option: ")
 
-        # Task 2: Menu navigation using if-else
+        # --- 1. ADD RECORDS (CRUD: Create) ---
         if choice == "1":
-            t = input("Enter Book Title: ")
-            a = input("Enter Author Name: ")
-            new_book = Book(t, a)
-            books_list.append(new_book)
-            # Arithmetic operator practice
-            total_books = total_books + 1 
-            print("Success: Book added to system.")
+            sub_type = input("Add (B)ook or (M)ember? ").upper()
+            if sub_type == "B":
+                bid = input("Enter Book ID: ")
+                t = input("Enter Title: ")
+                a = input("Enter Author: ")
+                books[bid] = Book(t, a)
+                print("Book recorded.")
+            elif sub_type == "M":
+                mid = input("Enter Member ID: ")
+                n = input("Enter Name: ")
+                members[mid] = Member(n)
+                print("Member recorded.")
 
+        # --- 2. UPDATE RECORDS (CRUD: Update) ---
         elif choice == "2":
-            query = input("Enter book title to search: ")
-            
-            # Create a simple list of titles for the membership operator
-            titles_only = []
-            for b in books_list:
-                titles_only.append(b.title)
-            
-            # Use membership operator 'in'
-            if query in titles_only:
-                print("Result: Yes, we have '" + query + "' in stock.")
-            else:
-                print("Result: Book not found.")
+            up_type = input("Update (B)ook or (M)ember? ").upper()
+            if up_type == "B":
+                bid = input("Enter Book ID to update: ")
+                if bid in books:
+                    books[bid].title = input("New Title: ")
+                    books[bid].author = input("New Author: ")
+                    print("Book updated.")
+                else:
+                    print("ID not found.")
 
+        # --- 3. REMOVE RECORDS (CRUD: Delete) ---
         elif choice == "3":
-            rem_title = input("Enter title to remove: ")
-            found_book = False
-            for b in books_list:
-                if b.title == rem_title:
-                    books_list.remove(b)
-                    total_books = total_books - 1
-                    found_book = True
-                    print("Success: Book removed.")
-                    break
-            
-            if not found_book:
-                print("Error: Could not find that book.")
-
-        elif choice == "4":
-            m_name = input("Enter member name: ")
-            new_member = Member(m_name)
-            members_list.append(new_member)
-            print("Success: Member registered.")
-
-        elif choice == "5":
-            rem_name = input("Enter member name to remove: ")
-            found_mem = False
-            for m in members_list:
-                if m.member_name == rem_name:
-                    members_list.remove(m)
-                    found_mem = True
-                    print("Success: Member removed.")
-                    break
-            
-            if found_mem == False: # Comparison operator practice
-                print("Error: Member name does not exist.")
-
-        elif choice == "6":
-            print("\n--- Current Statistics ---")
-            print("Total Books: " + str(total_books)) # Type conversion
-            print("Total Members: " + str(len(members_list)))
-            
-            # Logical and Identity operator practice
-            if total_books == 0 and len(members_list) == 0:
-                print("Library Status: Empty")
+            del_id = input("Enter ID to remove: ")
+            if del_id in books:
+                del books[del_id]
+                print("Book deleted.")
+            elif del_id in members:
+                del members[del_id]
+                print("Member deleted.")
             else:
-                print("Library Status: Active")
+                print("ID does not exist.")
 
-        elif choice == "7":
-            print("Exiting... Thank you for using the system!")
-            keep_running = False
+        # --- 4. SEARCH & FILTER ---
+        elif choice == "4":
+            keyword = input("Enter title keyword to filter: ").lower()
+            # List Comprehension used here to show off the concept
+            results = [b.title for b in books.values() if keyword in b.title.lower()]
             
-        else:
-            print("Invalid input. Please type a number from 1 to 7.")
+            print("Matching Books:", results if results else "No matches.")
 
-# This starts the program
+        # --- 5. BORROW (Transaction + Set usage) ---
+        elif choice == "5":
+            bid = input("Enter Book ID to borrow: ")
+            mid = input("Enter Member ID: ")
+            
+            # Logic check using membership operators
+            if bid in books and mid in members:
+                if bid not in issued_books:
+                    issued_books.add(bid) # Adding to Set
+                    # Log transaction as a dictionary
+                    log = {"action": "Borrow", "book": books[bid].title, "member": members[mid].member_name}
+                    transactions.append(log)
+                    print("Book issued successfully.")
+                else:
+                    print("Error: Book is already issued.")
+            else:
+                print("Error: Invalid IDs.")
+
+        # --- 6. RETURN ---
+        elif choice == "6":
+            bid = input("Enter Book ID to return: ")
+            if bid in issued_books:
+                issued_books.remove(bid) # Remove from Set
+                log = {"action": "Return", "book": books[bid].title}
+                transactions.append(log)
+                print("Book returned.")
+            else:
+                print("This book was not issued.")
+
+        # --- 7. TRANSACTION HISTORY ---
+        elif choice == "7":
+            print("\n--- Transaction Log ---")
+            for entry in transactions:
+                # Accessing dictionary keys
+                if entry["action"] == "Borrow":
+                    print(entry["member"] + " borrowed " + entry["book"])
+                else:
+                    print("Book '" + entry["book"] + "' was returned.")
+
+        elif choice == "8":
+            break
+
 if __name__ == "__main__":
-    start_program()
+    main()
