@@ -122,5 +122,4 @@ def main():
             case _:
                 print("Try again.")
 
-if __name__ == "__main__":
-lobalb
+ main()
